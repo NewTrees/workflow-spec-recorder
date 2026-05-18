@@ -1,0 +1,10 @@
+bin/
+obj/
+.vs/
+dist/
+**/Generated/
+**/*.user
+**/*.suo
+sessions/
+exports/
+
