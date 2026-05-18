@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>APA Demo 报销系统</title>
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+        max-width: 760px;
+        margin: 40px auto;
+        line-height: 1.5;
+      }
+
+      label {
+        display: block;
+        margin-top: 14px;
+      }
+
+      input,
+      select,
+      textarea {
+        display: block;
+        width: 100%;
+        margin-top: 6px;
+        padding: 8px;
+      }
+
+      button {
+        margin-top: 18px;
+        padding: 10px 18px;
+      }
+
+      .panel {
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        padding: 18px;
+        margin-bottom: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>APA Demo 报销系统</h1>
+
+    <section class="panel">
+      <h2>登录</h2>
+      <label for="username">账号</label>
+      <input id="username" name="username" placeholder="请输入账号" />
+
+      <label for="password">密码</label>
+      <input id="password" name="password" type="password" placeholder="请输入密码" />
+
+      <button id="login-button">立即登录</button>
+    </section>
+
+    <section class="panel">
+      <h2>报销单</h2>
+      <label for="title">标题</label>
+      <input id="title" name="title" placeholder="请输入标题" />
+
+      <label for="invoice-type">发票类型</label>
+      <select id="invoice-type" name="invoiceType">
+        <option value="">请选择</option>
+        <option>电子发票</option>
+        <option>纸质发票</option>
+      </select>
+
+      <label for="invoice-file">发票</label>
+      <input id="invoice-file" type="file" />
+
+      <label for="description">说明</label>
+      <textarea id="description" name="description"></textarea>
+
+      <button id="submit-button">提交送审</button>
+    </section>
+  </body>
+</html>

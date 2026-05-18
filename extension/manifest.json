@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "APA Flow Recorder Bridge",
+  "version": "0.1.0",
+  "description": "Capture browser workflow events for APA Flow Recorder.",
+  "permissions": [
+    "tabs",
+    "webNavigation"
+  ],
+  "host_permissions": [
+    "<all_urls>",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "APA Flow Recorder",
+    "default_popup": "popup.html"
+  }
+}
+
