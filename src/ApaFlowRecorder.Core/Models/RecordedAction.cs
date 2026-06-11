@@ -4,9 +4,15 @@ public enum RecordedAction
 {
     Navigate,
     Click,
+    DoubleClick,
     Fill,
     Select,
     Upload,
-    Wait
+    Wait,
+    Download,
+    DesktopClick,
+    DesktopInput,
+    DesktopKey,
+    DesktopDoubleClick,
+    Clipboard
 }
-

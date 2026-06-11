@@ -2,9 +2,14 @@ bin/
 obj/
 .vs/
 dist/
+.env
+.env.*
+*.key
+*.pfx
+*.snk
 **/Generated/
 **/*.user
 **/*.suo
 sessions/
 exports/
-
+.superpowers/

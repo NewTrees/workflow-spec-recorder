@@ -1,11 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "APA Flow Recorder Bridge",
-  "version": "0.1.0",
-  "description": "Capture browser workflow events for APA Flow Recorder.",
+  "name": "Workflow Spec Recorder Bridge",
+  "version": "0.2.4",
+  "author": "Yumin",
+  "description": "采集浏览器操作并发送给 Workflow Spec Recorder 桌面端。",
   "permissions": [
     "tabs",
-    "webNavigation"
+    "webNavigation",
+    "downloads"
   ],
   "host_permissions": [
     "<all_urls>",
@@ -13,6 +15,12 @@
   ],
   "background": {
     "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   },
   "content_scripts": [
     {
@@ -22,8 +30,13 @@
     }
   ],
   "action": {
-    "default_title": "APA Flow Recorder",
+    "default_title": "Workflow Spec Recorder",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
     "default_popup": "popup.html"
   }
 }
-

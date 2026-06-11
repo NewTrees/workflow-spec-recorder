@@ -107,10 +107,17 @@ public sealed class MarkdownExporter
     {
         RecordedAction.Navigate => "打开页面",
         RecordedAction.Click => "点击",
+        RecordedAction.DoubleClick => "双击",
         RecordedAction.Fill => "输入",
         RecordedAction.Select => "选择",
         RecordedAction.Upload => "上传",
         RecordedAction.Wait => "等待/校验",
+        RecordedAction.Download => "下载",
+        RecordedAction.DesktopClick => "桌面点击",
+        RecordedAction.DesktopInput => "桌面输入",
+        RecordedAction.DesktopKey => "桌面键盘",
+        RecordedAction.DesktopDoubleClick => "桌面双击",
+        RecordedAction.Clipboard => "剪贴板",
         _ => action.ToString()
     };
 

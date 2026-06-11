@@ -2,11 +2,11 @@
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <title>APA Flow Recorder</title>
+    <title>Workflow Spec Recorder</title>
     <style>
       body {
-        font-family: "Segoe UI", sans-serif;
-        width: 240px;
+        font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+        width: 260px;
         margin: 0;
         padding: 16px;
         color: #172033;
@@ -28,6 +28,16 @@
         color: #166534;
       }
 
+      .recording {
+        color: #b91c1c;
+        background: #fef2f2;
+      }
+
+      .waiting {
+        color: #c2410c;
+        background: #fff7ed;
+      }
+
       .bad {
         color: #b91c1c;
       }
@@ -40,10 +50,9 @@
     </style>
   </head>
   <body>
-    <h1>APA Flow Recorder</h1>
+    <h1>Workflow Spec Recorder</h1>
     <div class="status" id="status">正在检测桌面端...</div>
-    <p>桌面端启动并开始录制后，在网页中的点击、输入、选择和上传会自动发送到本地录制器。</p>
+    <p>桌面端启动并点击“开始录制”后，网页中的点击、输入、选择、上传和 Chrome 下载完成事件会自动发送到本地录制器。扩展图标显示“REC”表示正在录制，显示“等”表示桌面端在线但未录制。</p>
     <script src="popup.js"></script>
   </body>
 </html>
-

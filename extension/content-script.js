@@ -1,4 +1,9 @@
 const originalValues = new WeakMap();
+const CLICK_DELAY_MS = 260;
+
+let pendingClickTimer = null;
+
+chrome.runtime.sendMessage({ type: "extension-heartbeat" });
 
 function sendCaptureEvent(payload) {
   chrome.runtime.sendMessage({
@@ -116,6 +121,27 @@ function snapshotElement(element) {
   };
 }
 
+function clipboardOperationLabel(type) {
+  if (type === "copy") return "Copy";
+  if (type === "cut") return "Cut";
+  return "Paste";
+}
+
+function clearPendingClick() {
+  if (pendingClickTimer) {
+    clearTimeout(pendingClickTimer);
+    pendingClickTimer = null;
+  }
+}
+
+function queueClickCapture(payload) {
+  clearPendingClick();
+  pendingClickTimer = setTimeout(() => {
+    pendingClickTimer = null;
+    sendCaptureEvent(payload);
+  }, CLICK_DELAY_MS);
+}
+
 document.addEventListener("focusin", (event) => {
   const target = event.target;
   if (
@@ -171,6 +197,11 @@ document.addEventListener("change", (event) => {
 }, true);
 
 document.addEventListener("click", (event) => {
+  if (event.detail > 1) {
+    clearPendingClick();
+    return;
+  }
+
   const target = event.target instanceof Element
     ? event.target.closest("button, a, input[type='button'], input[type='submit'], [role='button']")
     : null;
@@ -179,9 +210,44 @@ document.addEventListener("click", (event) => {
     return;
   }
 
-  sendCaptureEvent({
+  queueClickCapture({
     eventType: "click",
     element: snapshotElement(target)
   });
 }, true);
 
+document.addEventListener("dblclick", (event) => {
+  const target = event.target instanceof Element
+    ? event.target.closest("button, a, input, textarea, select, [role='button'], [role='row'], [role='gridcell'], [role='option'], [role='treeitem'], [contenteditable='true']") ?? event.target
+    : null;
+
+  if (!target) {
+    return;
+  }
+
+  clearPendingClick();
+  sendCaptureEvent({
+    eventType: "doubleClick",
+    element: snapshotElement(target)
+  });
+}, true);
+
+["copy", "cut", "paste"].forEach((eventName) => {
+  document.addEventListener(eventName, (event) => {
+    const target = event.target instanceof Element
+      ? event.target
+      : document.activeElement instanceof Element
+        ? document.activeElement
+        : null;
+
+    if (!target) {
+      return;
+    }
+
+    sendCaptureEvent({
+      eventType: "clipboard",
+      value: clipboardOperationLabel(eventName),
+      element: snapshotElement(target)
+    });
+  }, true);
+});

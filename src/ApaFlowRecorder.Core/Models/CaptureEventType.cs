@@ -4,9 +4,16 @@ public enum CaptureEventType
 {
     Navigation,
     Click,
+    DoubleClick,
     Input,
     Select,
     Upload,
-    Wait
+    Wait,
+    Download,
+    DesktopClick,
+    DesktopInput,
+    DesktopKey,
+    DesktopDoubleClick,
+    Clipboard,
+    DesktopClipboard
 }
-

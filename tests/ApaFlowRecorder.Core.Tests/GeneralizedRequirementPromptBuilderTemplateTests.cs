@@ -1,0 +1,56 @@
+using ApaFlowRecorder.Core.Models;
+using ApaFlowRecorder.Core.Services;
+
+namespace ApaFlowRecorder.Core.Tests;
+
+public sealed class GeneralizedRequirementPromptBuilderTemplateTests
+{
+    [Fact]
+    public void Build_renders_custom_template_placeholders()
+    {
+        var session = new WorkflowSession { ProjectName = "模板测试" };
+        session.Steps.Add(new RecordedStep { Action = RecordedAction.Click, Title = "点击示例按钮" });
+        var materials = new SourceMaterialBundle
+        {
+            Files =
+            [
+                new SourceMaterialFile
+                {
+                    FileName = "输入样例.xlsx",
+                    Kind = "xlsx",
+                    Status = "已读取"
+                }
+            ]
+        };
+        var template = """
+        自定义角色。
+        {{recorded_example}}
+        {{source_materials}}
+        {{extra_instruction}}
+        # 项目需求描述
+        """;
+
+        var prompt = new GeneralizedRequirementPromptBuilder().Build(session, materials, "补充规则", template);
+
+        Assert.Contains("自定义角色", prompt);
+        Assert.Contains("点击示例按钮", prompt);
+        Assert.Contains("输入样例.xlsx", prompt);
+        Assert.Contains("补充规则", prompt);
+        Assert.DoesNotContain("{{recorded_example}}", prompt);
+    }
+
+    [Fact]
+    public void Build_appends_required_context_when_custom_template_omits_placeholders()
+    {
+        var session = new WorkflowSession();
+        session.Steps.Add(new RecordedStep { Action = RecordedAction.Click, Title = "代表性操作" });
+
+        var prompt = new GeneralizedRequirementPromptBuilder().Build(session, new SourceMaterialBundle(), "补充要求", "只写固定开头");
+
+        Assert.Contains("只写固定开头", prompt);
+        Assert.Contains("# 当前录制示例", prompt);
+        Assert.Contains("代表性操作", prompt);
+        Assert.Contains("# 输入资料清单", prompt);
+        Assert.Contains("# 用户补充要求", prompt);
+    }
+}

@@ -8,6 +8,9 @@ public sealed class RecordingCoordinator
 {
     private readonly StepFactory _stepFactory = new();
     private readonly string _sessionRoot;
+    private int _receivedEventCount;
+    private int _acceptedEventCount;
+    private int _ignoredEventCount;
 
     public RecordingCoordinator()
     {
@@ -20,9 +23,13 @@ public sealed class RecordingCoordinator
     public WorkflowSession CurrentSession { get; private set; } = new();
     public bool IsRecording { get; private set; }
     public bool IsPaused { get; private set; }
+    public int ReceivedEventCount => _receivedEventCount;
+    public int AcceptedEventCount => _acceptedEventCount;
+    public int IgnoredEventCount => _ignoredEventCount;
 
     public event EventHandler<RecordedStep>? StepRecorded;
     public event EventHandler? SessionChanged;
+    public event EventHandler<CaptureEventReport>? CaptureEventReceived;
 
     public void NewSession(string? projectName = null)
     {
@@ -32,6 +39,9 @@ public sealed class RecordingCoordinator
         };
         IsRecording = false;
         IsPaused = false;
+        _receivedEventCount = 0;
+        _acceptedEventCount = 0;
+        _ignoredEventCount = 0;
         SessionChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -57,14 +67,22 @@ public sealed class RecordingCoordinator
 
     public async Task<bool> HandleCaptureEventAsync(CaptureEvent captureEvent, CancellationToken cancellationToken = default)
     {
+        _receivedEventCount++;
+
         if (!IsRecording || IsPaused)
         {
+            _ignoredEventCount++;
+            CaptureEventReceived?.Invoke(
+                this,
+                new CaptureEventReport(captureEvent, false, IsPaused ? "录制已暂停" : "尚未开始录制"));
             return false;
         }
 
         var step = _stepFactory.CreateStep(captureEvent);
         step.ScreenshotPath = await SaveScreenshotAsync(captureEvent, cancellationToken);
         CurrentSession.Steps.Add(step);
+        _acceptedEventCount++;
+        CaptureEventReceived?.Invoke(this, new CaptureEventReport(captureEvent, true, "已记录为步骤"));
         StepRecorded?.Invoke(this, step);
         return true;
     }
@@ -100,3 +118,5 @@ public sealed class RecordingCoordinator
         return path;
     }
 }
+
+public sealed record CaptureEventReport(CaptureEvent CaptureEvent, bool Accepted, string Reason);
