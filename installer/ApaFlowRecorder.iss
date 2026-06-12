@@ -1,5 +1,5 @@
 #define MyAppName "Workflow Spec Recorder"
-#define MyAppVersion "0.2.4"
+#define MyAppVersion "0.2.6"
 #define MyAppPublisher "Yumin"
 #define MyAppExeName "ApaFlowRecorder.Desktop.exe"
 

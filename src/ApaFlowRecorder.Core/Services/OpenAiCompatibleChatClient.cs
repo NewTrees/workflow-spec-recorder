@@ -30,20 +30,27 @@ public sealed class OpenAiCompatibleChatClient
         }
 
         var endpoint = BuildEndpoint(settings.BaseUrl);
-        var userContent = BuildUserContent(prompt, images);
-        using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", settings.ApiKey);
-        request.Content = new StringContent(JsonSerializer.Serialize(new
+        var userContent = SupportsImageInput(settings)
+            ? BuildUserContent(prompt, images)
+            : BuildTextOnlyUserContent(prompt, images);
+        var requestBody = new Dictionary<string, object?>
         {
-            model = settings.Model,
-            temperature = settings.Temperature,
-            reasoning_split = true,
-            messages = new object[]
+            ["model"] = settings.Model,
+            ["temperature"] = settings.Temperature,
+            ["messages"] = new object[]
             {
                 new { role = "system", content = "你是资深 RPA / APA 需求分析师。输出严谨、结构化、可执行。" },
                 new { role = "user", content = userContent }
             }
-        }), Encoding.UTF8, "application/json");
+        };
+        if (!IsDeepSeek(settings))
+        {
+            requestBody["reasoning_split"] = true;
+        }
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", settings.ApiKey);
+        request.Content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
 
         using var response = await _httpClient.SendAsync(request, cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -109,6 +116,36 @@ public sealed class OpenAiCompatibleChatClient
 
         return parts;
     }
+
+    private static string BuildTextOnlyUserContent(string prompt, IReadOnlyList<LlmImageAttachment> images)
+    {
+        var availableImageCount = CountAvailableImages(images);
+        if (availableImageCount == 0)
+        {
+            return prompt;
+        }
+
+        return new StringBuilder(prompt)
+            .AppendLine()
+            .AppendLine()
+            .AppendLine("# 截图输入说明")
+            .AppendLine($"当前模型配置不发送截图：已检测到 {availableImageCount} 张本地截图，但该服务商不兼容视觉图片输入。本次生成将依据文字步骤、页面标题、URL、元素选择器、DOM 语义和资料文本完成。")
+            .ToString();
+    }
+
+    private static bool SupportsImageInput(LlmSettings settings) =>
+        !IsDeepSeek(settings);
+
+    private static bool IsDeepSeek(LlmSettings settings) =>
+        Contains(settings.ProviderName, "deepseek") ||
+        Contains(settings.BaseUrl, "deepseek.com") ||
+        settings.Model.StartsWith("deepseek-", StringComparison.OrdinalIgnoreCase);
+
+    private static bool Contains(string value, string expected) =>
+        value.Contains(expected, StringComparison.OrdinalIgnoreCase);
+
+    private static int CountAvailableImages(IReadOnlyList<LlmImageAttachment> images) =>
+        images.Count(image => !string.IsNullOrWhiteSpace(image.Path) && File.Exists(image.Path));
 
     private static string ResolveMediaType(LlmImageAttachment image)
     {

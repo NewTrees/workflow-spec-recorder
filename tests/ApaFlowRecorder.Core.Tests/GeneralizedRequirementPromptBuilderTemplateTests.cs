@@ -53,4 +53,29 @@ public sealed class GeneralizedRequirementPromptBuilderTemplateTests
         Assert.Contains("# 输入资料清单", prompt);
         Assert.Contains("# 用户补充要求", prompt);
     }
+
+    [Fact]
+    public void Build_recorded_example_omits_capture_technical_details()
+    {
+        var session = new WorkflowSession();
+        session.Steps.Add(new RecordedStep
+        {
+            Action = RecordedAction.Click,
+            Title = "查询证券余额",
+            PageTitle = "证券余额查询",
+            PageUrl = "https://example.test/internal/query?id=123",
+            Element = new ElementSnapshot
+            {
+                Text = "查询",
+                CssSelector = "#app > div:nth-child(2) button.primary"
+            }
+        });
+
+        var prompt = new GeneralizedRequirementPromptBuilder().Build(session, new SourceMaterialBundle(), null);
+
+        Assert.Contains("查询证券余额", prompt);
+        Assert.Contains("证券余额查询", prompt);
+        Assert.DoesNotContain("https://example.test/internal/query?id=123", prompt);
+        Assert.DoesNotContain("#app > div:nth-child(2) button.primary", prompt);
+    }
 }

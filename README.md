@@ -54,7 +54,7 @@ dist\ApaFlowRecorderSelfContained\start-recorder.bat
 安装包入口：
 
 ```text
-dist\installer\WorkflowSpecRecorder-Setup-0.2.4.exe
+dist\installer\WorkflowSpecRecorder-Setup-0.2.6.exe
 ```
 
 安装向导会显示安装目录选择页；默认安装到当前用户目录下的 `Programs\WorkflowSpecRecorder`，测试用户可以在安装时改成任意有写入权限的路径。
@@ -67,7 +67,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build-installer.ps1
 
 ## 安装 Chrome 扩展
 
-Chrome 不允许普通安装包静默安装本地未上架扩展，所以安装桌面端后仍需要手动加载一次扩展。安装后的桌面端顶部有 `打开插件目录` 按钮，开始菜单也有 `打开 Chrome 扩展目录` 快捷方式。
+Chrome 不允许普通安装包静默安装本地未上架扩展，所以安装桌面端后仍需要手动加载一次扩展。安装后的桌面端顶部有 `打开 Chrome 扩展目录` 按钮，开始菜单也有 `打开 Chrome 扩展目录` 快捷方式。
 
 1. 打开 `chrome://extensions/`
 2. 开启右上角“开发者模式”

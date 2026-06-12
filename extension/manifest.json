@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Workflow Spec Recorder Bridge",
-  "version": "0.2.4",
+  "version": "0.2.6",
   "author": "Yumin",
   "description": "采集浏览器操作并发送给 Workflow Spec Recorder 桌面端。",
   "permissions": [

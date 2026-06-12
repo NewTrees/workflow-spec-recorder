@@ -8,6 +8,7 @@ public sealed class RecordingCoordinator
 {
     private readonly StepFactory _stepFactory = new();
     private readonly string _sessionRoot;
+    private static readonly TimeSpan ClickNavigationMergeWindow = TimeSpan.FromSeconds(2);
     private int _receivedEventCount;
     private int _acceptedEventCount;
     private int _ignoredEventCount;
@@ -78,12 +79,61 @@ public sealed class RecordingCoordinator
             return false;
         }
 
+        if (TryMergeNavigationAfterClick(captureEvent))
+        {
+            _acceptedEventCount++;
+            CaptureEventReceived?.Invoke(this, new CaptureEventReport(captureEvent, true, "导航已合并到上一条点击步骤"));
+            SessionChanged?.Invoke(this, EventArgs.Empty);
+            return true;
+        }
+
         var step = _stepFactory.CreateStep(captureEvent);
         step.ScreenshotPath = await SaveScreenshotAsync(captureEvent, cancellationToken);
         CurrentSession.Steps.Add(step);
         _acceptedEventCount++;
         CaptureEventReceived?.Invoke(this, new CaptureEventReport(captureEvent, true, "已记录为步骤"));
         StepRecorded?.Invoke(this, step);
+        return true;
+    }
+
+    private bool TryMergeNavigationAfterClick(CaptureEvent captureEvent)
+    {
+        if (captureEvent.EventType != CaptureEventType.Navigation || CurrentSession.Steps.Count == 0)
+        {
+            return false;
+        }
+
+        var previousStep = CurrentSession.Steps[^1];
+        if (previousStep.Action is not (RecordedAction.Click or RecordedAction.DoubleClick))
+        {
+            return false;
+        }
+
+        var elapsed = captureEvent.CapturedAtUtc - previousStep.CapturedAtUtc;
+        if (elapsed < TimeSpan.Zero || elapsed > ClickNavigationMergeWindow)
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(captureEvent.PageTitle))
+        {
+            previousStep.PageTitle = captureEvent.PageTitle;
+        }
+
+        if (!string.IsNullOrWhiteSpace(captureEvent.PageUrl))
+        {
+            previousStep.PageUrl = captureEvent.PageUrl;
+        }
+
+        if (!string.IsNullOrWhiteSpace(captureEvent.PageTitle))
+        {
+            previousStep.SuccessCriteria = $"已进入“{captureEvent.PageTitle}”页面";
+        }
+        else if (!string.IsNullOrWhiteSpace(captureEvent.PageUrl))
+        {
+            previousStep.SuccessCriteria = "已进入点击后的目标页面";
+        }
+
         return true;
     }
 

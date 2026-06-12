@@ -15,8 +15,8 @@ public sealed class RecordedStep : INotifyPropertyChanged
     public Guid Id { get; init; } = Guid.NewGuid();
     public RecordedAction Action { get; init; }
     public DateTimeOffset CapturedAtUtc { get; init; } = DateTimeOffset.UtcNow;
-    public string? PageUrl { get; init; }
-    public string? PageTitle { get; init; }
+    public string? PageUrl { get; set; }
+    public string? PageTitle { get; set; }
     public ElementSnapshot? Element { get; init; }
     public string? ScreenshotPath { get; set; }
 
@@ -69,4 +69,3 @@ public sealed class RecordedStep : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }
-

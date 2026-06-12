@@ -67,6 +67,54 @@ public class OpenAiCompatibleChatClientTests
         }
     }
 
+    [Fact]
+    public async Task CompleteAsync_sends_text_only_for_deepseek_even_when_images_are_supplied()
+    {
+        var handler = new CapturingHandler();
+        var client = new OpenAiCompatibleChatClient(new HttpClient(handler));
+        var screenshotPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.png");
+        await File.WriteAllBytesAsync(screenshotPath, [1, 2, 3]);
+
+        try
+        {
+            await client.CompleteAsync(
+                new LlmSettings
+                {
+                    ProviderName = "DeepSeek",
+                    BaseUrl = "https://api.deepseek.com",
+                    Model = "deepseek-chat",
+                    ApiKey = "plain-text-key",
+                    Temperature = 0.1
+                },
+                "请结合录屏和截图理解业务意图",
+                [
+                    new LlmImageAttachment
+                    {
+                        Path = screenshotPath,
+                        Label = "步骤 1：点击示例分类",
+                        MediaType = "image/png"
+                    }
+                ],
+                CancellationToken.None);
+
+            using var requestJson = JsonDocument.Parse(handler.RequestBody);
+            Assert.False(requestJson.RootElement.TryGetProperty("reasoning_split", out _));
+
+            var userContent = requestJson.RootElement
+                .GetProperty("messages")[1]
+                .GetProperty("content");
+
+            Assert.Equal(JsonValueKind.String, userContent.ValueKind);
+            Assert.Contains("请结合录屏和截图理解业务意图", userContent.GetString(), StringComparison.Ordinal);
+            Assert.Contains("当前模型配置不发送截图", userContent.GetString(), StringComparison.Ordinal);
+            Assert.DoesNotContain("image_url", handler.RequestBody, StringComparison.Ordinal);
+        }
+        finally
+        {
+            File.Delete(screenshotPath);
+        }
+    }
+
     private static LlmSettings BuildSettings() => new()
     {
         ProviderName = "Test",
