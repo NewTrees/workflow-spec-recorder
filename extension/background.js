@@ -1,4 +1,4 @@
-const API_ROOT = "http://127.0.0.1:8765";
+const API_ROOT = "http://127.0.0.1:18765";
 const SCREENSHOT_MIN_INTERVAL_MS = 600;
 const SCREENSHOT_RETRY_DELAY_MS = 250;
 

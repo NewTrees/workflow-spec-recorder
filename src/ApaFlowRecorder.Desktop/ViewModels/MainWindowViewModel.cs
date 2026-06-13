@@ -47,6 +47,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private int _selectedWorkspaceIndex;
     private bool _isLoadingLlmSettings;
     private bool _isGeneratingFinalRequirement;
+    private bool _isLocalCaptureServerRunning;
 
     public MainWindowViewModel()
     {
@@ -148,6 +149,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         {
             _serverStatus = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(LocalServiceProgressLabel));
             RefreshWorkbenchProgress();
         }
     }
@@ -272,6 +274,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
 
     public string LocalServiceProgressLabel => ServerStatus.Contains("已启动", StringComparison.Ordinal)
         ? "本地服务已启动"
+        : ServerStatus.Contains("失败", StringComparison.Ordinal)
+            ? "本地服务启动失败"
         : "本地服务启动中";
 
     public string ExtensionProgressLabel => IsExtensionRecentlySeen()
@@ -576,10 +580,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
 
     public async Task InitializeAsync()
     {
-        await _captureServer.StartAsync();
-        ServerStatus = "本地采集服务已启动：127.0.0.1:8765";
-        ExtensionConnectionStatus = "本地服务已启动，但尚未收到 Chrome 扩展心跳。请先加载扩展并点击“检测 Chrome 扩展”。";
-        StatusMessage = "请先检测 Chrome 扩展连接，确认在线后点击“开始/继续录制”。";
+        try
+        {
+            await _captureServer.StartAsync();
+            _isLocalCaptureServerRunning = true;
+            ServerStatus = $"本地采集服务已启动：127.0.0.1:{LocalCaptureServer.Port}";
+            ExtensionConnectionStatus = "本地服务已启动，但尚未收到 Chrome 扩展心跳。请先加载扩展并点击“检测 Chrome 扩展”。";
+            StatusMessage = "请先检测 Chrome 扩展连接，确认在线后点击“开始/继续录制”。";
+        }
+        catch (Exception ex)
+        {
+            _isLocalCaptureServerRunning = false;
+            ServerStatus = $"本地采集服务启动失败：{ex.Message}";
+            ExtensionConnectionStatus = "Chrome 扩展离线：本地采集服务未启动，浏览器事件暂时无法接收。";
+            StatusMessage = $"本地采集服务启动失败，窗口已保持打开。请检查端口或安全软件限制后重启应用：{ex.Message}";
+        }
+
         RefreshRecordingTelemetry();
         RefreshWorkbenchProgress();
     }
@@ -898,6 +914,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
 
     private void CheckExtensionConnection()
     {
+        if (!_isLocalCaptureServerRunning)
+        {
+            ExtensionConnectionStatus = "Chrome 扩展离线：本地采集服务未启动，无法打开连接检测页。";
+            StatusMessage = ExtensionConnectionStatus;
+            return;
+        }
+
         if (!IsExtensionRecentlySeen())
         {
             OpenExtensionCheckPage();
@@ -913,7 +936,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     {
         Process.Start(new ProcessStartInfo
         {
-            FileName = "http://127.0.0.1:8765/extension-check",
+            FileName = $"{LocalCaptureServer.ListenUrl}/extension-check",
             UseShellExecute = true
         });
     }

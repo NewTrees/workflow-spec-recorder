@@ -2,7 +2,7 @@ const statusElement = document.getElementById("status");
 
 async function refreshStatus() {
   try {
-    const response = await fetch("http://127.0.0.1:8765/api/extension-heartbeat", {
+    const response = await fetch("http://127.0.0.1:18765/api/extension-heartbeat", {
       method: "POST"
     });
     if (!response.ok) {

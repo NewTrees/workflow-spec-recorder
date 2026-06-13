@@ -12,6 +12,9 @@ namespace ApaFlowRecorder.Desktop.Services;
 
 public sealed class LocalCaptureServer : IAsyncDisposable
 {
+    public const int Port = 18765;
+    public const string ListenUrl = "http://127.0.0.1:18765";
+
     private readonly Func<CaptureEvent, CancellationToken, Task<bool>> _handleCaptureEventAsync;
     private readonly Action? _extensionHeartbeat;
     private readonly Func<object>? _healthStatusProvider;
@@ -35,7 +38,7 @@ public sealed class LocalCaptureServer : IAsyncDisposable
         }
 
         var builder = WebApplication.CreateSlimBuilder();
-        builder.WebHost.UseUrls("http://127.0.0.1:8765");
+        builder.WebHost.UseUrls(ListenUrl);
         builder.Services.Configure<JsonOptions>(options =>
         {
             options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -71,7 +74,16 @@ public sealed class LocalCaptureServer : IAsyncDisposable
             return accepted ? Results.Accepted() : Results.NoContent();
         });
 
-        await _app.StartAsync(cancellationToken);
+        try
+        {
+            await _app.StartAsync(cancellationToken);
+        }
+        catch
+        {
+            await _app.DisposeAsync();
+            _app = null;
+            throw;
+        }
     }
 
     public async ValueTask DisposeAsync()

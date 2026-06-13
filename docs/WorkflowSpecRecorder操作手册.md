@@ -1,6 +1,6 @@
 ﻿# Workflow Spec Recorder操作手册
 
-适用版本：0.2.7  
+适用版本：0.2.8  
 适用对象：需要把浏览器操作示例、业务资料、输入输出样例转换成 自动化工作流需求文档的用户。
 
 ## 1. 软件简介
@@ -92,7 +92,7 @@ apa-flow-recorder\dist\ApaFlowRecorderSelfContained\extension
 4. 如果未连接，软件会打开本地检测页：
    
    ```text
-   http://127.0.0.1:8765/extension-check
+   http://127.0.0.1:18765/extension-check
    ```
 
 5. 按检测页提示重新加载扩展，或刷新业务页面后，再回到桌面端点击“检测插件连接”。

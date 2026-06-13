@@ -54,7 +54,7 @@ dist\ApaFlowRecorderSelfContained\start-recorder.bat
 安装包入口：
 
 ```text
-dist\installer\WorkflowSpecRecorder-Setup-0.2.7.exe
+dist\installer\WorkflowSpecRecorder-Setup-0.2.8.exe
 ```
 
 安装向导会显示安装目录选择页；默认安装到当前用户目录下的 `Programs\WorkflowSpecRecorder`，测试用户可以在安装时改成任意有写入权限的路径。
