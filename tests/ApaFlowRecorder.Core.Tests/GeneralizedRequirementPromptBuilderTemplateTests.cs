@@ -27,7 +27,7 @@ public sealed class GeneralizedRequirementPromptBuilderTemplateTests
         {{recorded_example}}
         {{source_materials}}
         {{extra_instruction}}
-        # 项目需求描述
+        # [流程名称]
         """;
 
         var prompt = new GeneralizedRequirementPromptBuilder().Build(session, materials, "补充规则", template);
@@ -52,6 +52,29 @@ public sealed class GeneralizedRequirementPromptBuilderTemplateTests
         Assert.Contains("代表性操作", prompt);
         Assert.Contains("# 输入资料清单", prompt);
         Assert.Contains("# 用户补充要求", prompt);
+    }
+
+    [Fact]
+    public void Build_injects_configurable_requirement_document_template_separately_from_prompt_template()
+    {
+        var documentTemplate = """
+        # [流程名称]
+
+        ## 自定义最终文档章节
+
+        - 必须按这个模板填充。
+        """;
+
+        var prompt = new GeneralizedRequirementPromptBuilder().Build(
+            new WorkflowSession { ProjectName = "模板测试" },
+            new SourceMaterialBundle(),
+            null,
+            "只写分析规则，不包含最终模板占位符。",
+            documentTemplate);
+
+        Assert.Contains("# 最终需求文档模板", prompt);
+        Assert.Contains("## 自定义最终文档章节", prompt);
+        Assert.Contains("必须按这个模板填充", prompt);
     }
 
     [Fact]

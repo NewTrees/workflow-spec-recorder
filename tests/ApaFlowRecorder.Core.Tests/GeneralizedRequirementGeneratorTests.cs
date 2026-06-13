@@ -24,13 +24,23 @@ public class GeneralizedRequirementGeneratorTests
         var result = await new GeneralizedRequirementGenerator().GenerateAsync(session, materials, new LlmSettings(), null);
 
         Assert.Equal("Rule-based fallback", result.GenerationMode);
-        Assert.StartsWith("# 项目需求描述", result.Markdown);
-        Assert.Contains("## 项目目标", result.Markdown);
-        Assert.Contains("## 流程步骤", result.Markdown);
-        Assert.Contains("## 流程输入", result.Markdown);
-        Assert.Contains("## 流程输出", result.Markdown);
+        Assert.StartsWith("# 业务资料采集", result.Markdown);
+        Assert.Contains("## 一、流程概述", result.Markdown);
+        Assert.Contains("## 二、输入与输出", result.Markdown);
+        Assert.Contains("| 参数名 | 类型 | 必填 | 默认值 | 说明 |", result.Markdown);
+        Assert.Contains("| 输出项 | 格式 | 说明 |", result.Markdown);
+        Assert.Contains("## 三、操作步骤（按执行顺序编号）", result.Markdown);
+        Assert.Contains("### 步骤1：", result.Markdown);
+        Assert.Contains("- **操作对象**：", result.Markdown);
+        Assert.Contains("- **具体动作**：", result.Markdown);
+        Assert.Contains("- **关键元素**：", result.Markdown);
+        Assert.Contains("- **预期结果**：", result.Markdown);
+        Assert.Contains("- **失败处理**：", result.Markdown);
+        Assert.Contains("## 四、业务规则与约束", result.Markdown);
+        Assert.Contains("## 五、异常场景", result.Markdown);
+        Assert.Contains("## 六、参考信息（可选但非常有帮助）", result.Markdown);
         Assert.Contains("代表性示例", result.Markdown);
-        Assert.Contains("不要把录制步骤当成固定点击脚本", result.Markdown);
+        Assert.Contains("录制步骤和截图只作为代表性示例", result.Markdown);
         Assert.Contains("动态集合", result.Markdown);
         Assert.Contains("输入样例", result.Markdown);
         Assert.Contains("输出样例", result.Markdown);
@@ -84,12 +94,13 @@ public class GeneralizedRequirementGeneratorTests
 
         var result = await new GeneralizedRequirementGenerator().GenerateAsync(session, materials, new LlmSettings(), "无需界面操作");
 
-        Assert.Contains("纯资料处理", result.Markdown);
+        Assert.Contains("资料处理", result.Markdown);
         Assert.Contains("销售明细.xlsx", result.Markdown);
         Assert.Contains("处理规则.docx", result.SpecJson);
         Assert.Contains("foreach 输入记录", result.Markdown);
-        Assert.Contains("## 流程输入", result.Markdown);
-        Assert.Contains("## 流程输出", result.Markdown);
+        Assert.Contains("## 二、输入与输出", result.Markdown);
+        Assert.Contains("### 输入", result.Markdown);
+        Assert.Contains("### 输出", result.Markdown);
     }
 
     [Fact]
@@ -100,12 +111,15 @@ public class GeneralizedRequirementGeneratorTests
             BuildRepresentativeMaterials(),
             null);
 
-        Assert.Contains("必须严格输出以下 Markdown 模板", prompt);
-        Assert.Contains("# 项目需求描述", prompt);
-        Assert.Contains("## 项目目标", prompt);
-        Assert.Contains("## 流程步骤", prompt);
-        Assert.Contains("## 流程输入", prompt);
-        Assert.Contains("## 流程输出", prompt);
+        Assert.Contains("必须严格填充下面的“需求文档模板”", prompt);
+        Assert.Contains("# [流程名称]", prompt);
+        Assert.Contains("## 一、流程概述", prompt);
+        Assert.Contains("## 二、输入与输出", prompt);
+        Assert.Contains("### 输入", prompt);
+        Assert.Contains("### 输出", prompt);
+        Assert.Contains("## 三、操作步骤（按执行顺序编号）", prompt);
+        Assert.Contains("### 步骤1：[步骤标题]", prompt);
+        Assert.Contains("## 五、异常场景", prompt);
         Assert.Contains("不要输出“录制示例如何参与泛化”", prompt);
         Assert.Contains("不要输出 Mermaid、ASCII 流程图、伪代码大段代码块", prompt);
     }
@@ -148,7 +162,7 @@ public class GeneralizedRequirementGeneratorTests
             Assert.Contains("推断完整业务意图", prompt);
             Assert.Contains("输入样例", prompt);
             Assert.Contains("输出样例", prompt);
-            Assert.Contains("foreach", prompt);
+            Assert.Contains("遍历全部同类对象", prompt);
             Assert.Contains("截图=已附带", prompt);
             Assert.DoesNotContain("鎳", prompt);
             Assert.DoesNotContain("�", prompt);
@@ -298,8 +312,8 @@ public class GeneralizedRequirementGeneratorTests
 
         Assert.Equal(2, handler.RequestCount);
         Assert.Contains("template repair", result.GenerationMode);
-        Assert.StartsWith("# 项目需求描述", result.Markdown);
-        Assert.Contains("## 约束与异常处理", result.Markdown);
+        Assert.StartsWith("# 模板修正流程", result.Markdown);
+        Assert.Contains("## 五、异常场景", result.Markdown);
         using var repairRequestJson = JsonDocument.Parse(handler.LastRequestBody);
         var repairPrompt = repairRequestJson.RootElement
             .GetProperty("messages")[1]
@@ -318,7 +332,7 @@ public class GeneralizedRequirementGeneratorTests
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(
-                    "{\"choices\":[{\"message\":{\"content\":\"# 项目需求描述\\n\\n## 项目目标\\n生成需求。\\n\\n## 流程步骤\\n第一步：处理资料。\\n\\n## 流程输入\\n1. 输入资料。\\n\\n## 流程输出\\n1. 输出文档。\\n\\n## 约束与异常处理\\n1. 失败时记录日志。\"}}]}",
+                    "{\"choices\":[{\"message\":{\"content\":\"# 图像资料流程\\n\\n## 一、流程概述\\n\\n- **目标**：生成需求。\\n- **触发方式**：手动运行。\\n- **最终产出**：输出文档。\\n\\n## 二、输入与输出\\n\\n### 输入\\n\\n| 参数名 | 类型 | 必填 | 默认值 | 说明 |\\n|--------|------|------|--------|------|\\n| input | file | 是 | \\\"\\\" | 输入资料 |\\n\\n### 输出\\n\\n| 输出项 | 格式 | 说明 |\\n|--------|------|------|\\n| 文档 | Markdown | 需求文档 |\\n\\n## 三、操作步骤（按执行顺序编号）\\n\\n### 步骤1：处理资料\\n- **操作对象**：输入资料。\\n- **具体动作**：读取资料并生成文档。\\n- **关键元素**：资料正文。\\n- **预期结果**：得到需求文档。\\n- **失败处理**：失败时记录日志。\\n\\n## 四、业务规则与约束\\n\\n- 规则1：待确认。\\n\\n## 五、异常场景\\n\\n| 异常情况 | 处理方式 |\\n|----------|----------|\\n| 失败 | 记录日志 |\\n\\n## 六、参考信息（可选但非常有帮助）\\n\\n- **截图**：待补充。\\n- **示例数据**：待补充。\\n- **已有账号/凭据**：无。\"}}]}",
                     Encoding.UTF8,
                     "application/json")
             };
@@ -336,7 +350,7 @@ public class GeneralizedRequirementGeneratorTests
             LastRequestBody = await request.Content!.ReadAsStringAsync(cancellationToken);
             var content = RequestCount == 1
                 ? "# 需求分析报告\n\n## 录制示例如何参与泛化\n分析内容。"
-                : "# 项目需求描述\n\n## 项目目标\n目标。\n\n## 流程步骤\n第一步：处理。\n\n## 流程输入\n1. 输入。\n\n## 流程输出\n1. 输出。\n\n## 约束与异常处理\n1. 异常记录。";
+                : "# 模板修正流程\n\n## 一、流程概述\n\n- **目标**：目标。\n- **触发方式**：手动运行。\n- **最终产出**：输出。\n\n## 二、输入与输出\n\n### 输入\n\n| 参数名 | 类型 | 必填 | 默认值 | 说明 |\n|--------|------|------|--------|------|\n| input | file | 是 | \"\" | 输入资料 |\n\n### 输出\n\n| 输出项 | 格式 | 说明 |\n|--------|------|------|\n| output | Markdown | 输出文档 |\n\n## 三、操作步骤（按执行顺序编号）\n\n### 步骤1：处理\n- **操作对象**：输入资料。\n- **具体动作**：处理。\n- **关键元素**：资料正文。\n- **预期结果**：输出。\n- **失败处理**：异常记录。\n\n## 四、业务规则与约束\n\n- 规则1：待确认。\n\n## 五、异常场景\n\n| 异常情况 | 处理方式 |\n|----------|----------|\n| 异常 | 记录 |\n\n## 六、参考信息（可选但非常有帮助）\n\n- **截图**：无。\n- **示例数据**：待补充。\n- **已有账号/凭据**：无。";
 
             return new HttpResponseMessage(HttpStatusCode.OK)
             {

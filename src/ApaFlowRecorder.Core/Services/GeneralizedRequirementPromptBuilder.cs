@@ -8,6 +8,7 @@ public sealed class GeneralizedRequirementPromptBuilder
     public const string RecordedExamplePlaceholder = "{{recorded_example}}";
     public const string SourceMaterialsPlaceholder = "{{source_materials}}";
     public const string ExtraInstructionPlaceholder = "{{extra_instruction}}";
+    public const string RequirementDocumentTemplatePlaceholder = "{{requirement_document_template}}";
 
     public const string DefaultTemplate =
         """
@@ -25,27 +26,19 @@ public sealed class GeneralizedRequirementPromptBuilder
         {{extra_instruction}}
 
         # 最终文档输出要求
-        必须严格输出以下 Markdown 模板，文档标题必须是 `# 项目需求描述`。最终文档要像交付给 APA 开发/执行智能体的需求文档，不要像分析报告、推理笔记或录屏摘要。
+        必须严格填充下面的“需求文档模板”。把 `# [流程名称]` 替换成根据资料推断出的真实流程名称；如果无法推断，使用项目名或“未命名流程”。最终文档要像交付给 APA Creator / APA 开发智能体的需求文档，不要像分析报告、推理笔记或录屏摘要。
 
-        # 项目需求描述
+        填写质量要求：
+        - “最终产出”可以写成多行清单，明确文件、日志、状态码或系统回写。
+        - “具体动作”可以用编号子步骤，写清打开、点击、填写、提交、读取、遍历、写入等业务动作。
+        - “失败处理”要尽量写清重试次数、间隔，以及跳过、继续、中止或人工确认策略。
+        - “输出”表要写清格式和字段说明。
+        - “参考信息”可以写目标网址、输出目录、示例数据来源和账号要求，但不要输出真实密码或敏感凭据。
 
-        ## 项目目标
-        用 1 到 3 段自然语言说明业务目标、自动化闭环、核心处理对象、输入来源和输出成果。可以补充“本流程目标不是简单网页复制/固定点击，而是完成……的完整自动化闭环”。
+        # 最终需求文档模板
+        {{requirement_document_template}}
 
-        ## 流程步骤
-        用“第一步：……、第二步：……”格式描述可执行步骤。每一步标题必须准确表达业务动作，例如“查询证券余额”“导出订单报表”“回写处理结果”，不要写成“点击按钮”“打开页面”这类录制动作。每一步正文只写业务对象、处理规则、输入来源、输出结果和必要的数据关系。若存在循环，请在步骤文字里写清楚从哪里读取集合、如何遍历、每轮写入什么结果；可以在自然语言中写明 foreach 输入记录、foreach 动态集合等循环关系。
-        关键验证、失败处理、等待和重试只在业务上必要时写；不要每一步都机械添加“关键验证”和“失败处理”。
-
-        ## 流程输入
-        用编号列表写清楚输入变量、文件、Sheet、字段、配置项和默认值。未知项可以写成“待确认”，但不要编造不存在的输入。
-
-        ## 流程输出
-        用编号列表写清楚输出文件、写入位置、字段结构、状态回写、日志或布尔结果。未知项可以写成“待确认”。
-
-        ## 约束与异常处理
-        只保留执行必须知道的等待、异常、重试、限流、断点续跑、数据校验和人工确认项。没有明确业务必要性时，本节可以很短，不要为了完整而编造异常策略。
-
-        禁止事项：不要输出“录制示例如何参与泛化”“需求推断说明”“示例步骤 vs 泛化步骤对照”“总体流程图”等分析过程章节；不要输出 Mermaid、ASCII 流程图、伪代码大段代码块；不要为了显得完整而堆表格；不要输出浏览器、选择器、URL、截图路径、桌面窗口标识等采集技术信息。
+        禁止事项：不要输出“录制示例如何参与泛化”“需求推断说明”“示例步骤 vs 泛化步骤对照”“总体流程图”等分析过程章节；不要输出 Mermaid、ASCII 流程图、伪代码大段代码块；不要输出浏览器选择器、CSS、XPath、DOM、截图本地路径、桌面窗口句柄等采集技术信息，除非它本身就是业务系统名称、业务入口或业务输入。
 
         请直接输出最终 Markdown，不要输出解释。
         """;
@@ -54,17 +47,22 @@ public sealed class GeneralizedRequirementPromptBuilder
         WorkflowSession session,
         SourceMaterialBundle materials,
         string? extraInstruction,
-        string? promptTemplate = null)
+        string? promptTemplate = null,
+        string? requirementDocumentTemplate = null)
     {
         var recordedExample = BuildRecordedExample(session);
         var sourceMaterials = BuildSourceMaterials(materials);
         var userInstruction = BuildExtraInstruction(extraInstruction);
         var template = string.IsNullOrWhiteSpace(promptTemplate) ? DefaultTemplate : promptTemplate;
+        var documentTemplate = string.IsNullOrWhiteSpace(requirementDocumentTemplate)
+            ? RequirementDocumentTemplateStore.DefaultTemplate
+            : requirementDocumentTemplate;
 
         var rendered = template
             .Replace(RecordedExamplePlaceholder, recordedExample, StringComparison.Ordinal)
             .Replace(SourceMaterialsPlaceholder, sourceMaterials, StringComparison.Ordinal)
-            .Replace(ExtraInstructionPlaceholder, userInstruction, StringComparison.Ordinal);
+            .Replace(ExtraInstructionPlaceholder, userInstruction, StringComparison.Ordinal)
+            .Replace(RequirementDocumentTemplatePlaceholder, documentTemplate, StringComparison.Ordinal);
 
         var builder = new StringBuilder(rendered.TrimEnd());
         if (!template.Contains(RecordedExamplePlaceholder, StringComparison.Ordinal))
@@ -84,6 +82,13 @@ public sealed class GeneralizedRequirementPromptBuilder
         {
             builder.AppendLine();
             builder.AppendLine(userInstruction);
+        }
+
+        if (!template.Contains(RequirementDocumentTemplatePlaceholder, StringComparison.Ordinal))
+        {
+            builder.AppendLine();
+            builder.AppendLine("# 最终需求文档模板");
+            builder.AppendLine(documentTemplate);
         }
 
         builder.AppendLine();

@@ -1,6 +1,6 @@
 ﻿# Workflow Spec Recorder操作手册
 
-适用版本：0.2.6  
+适用版本：0.2.7  
 适用对象：需要把浏览器操作示例、业务资料、输入输出样例转换成 自动化工作流需求文档的用户。
 
 ## 1. 软件简介
@@ -251,8 +251,27 @@ Base URL: https://api.deepseek.com
 - `{{recorded_example}}`：注入录制步骤和截图说明。
 - `{{source_materials}}`：注入已添加资料内容。
 - `{{extra_instruction}}`：注入补充要求。
+- `{{requirement_document_template}}`：注入最终需求文档模板。
 
-### 6.6 泛化文档导出位置
+### 6.6 需求文档模板
+
+需求文档模板位于 `泛化需求` 页的 `需求文档模板` 区域，用来控制最终 `APA-generalized-requirements.md` 的 Markdown 结构。
+
+可执行操作：
+
+- 点击 `保存模板` 保存当前模板。
+- 点击 `恢复默认模板` 恢复系统默认模板。
+- 点击 `打开模板文件` 在本地编辑器中打开模板文件。
+
+默认模板来自 APA 流程需求文档模板中的空模板结构，不包含示例业务内容。
+
+模板文件位置：
+
+```text
+%APPDATA%\ApaFlowRecorder\requirement-document-template.md
+```
+
+### 6.7 泛化文档导出位置
 
 默认导出到：
 
@@ -460,6 +479,7 @@ Chrome 扩展可采集：
 | 泛化需求导出      | `%USERPROFILE%\Documents\ApaFlowRecorder\GeneralizedExports\` |
 | LLM 配置      | `%APPDATA%\ApaFlowRecorder\llm-settings.json`                 |
 | 提示词模板       | `%APPDATA%\ApaFlowRecorder\prompt-template.md`                |
+| 需求文档模板      | `%APPDATA%\ApaFlowRecorder\requirement-document-template.md`  |
 | 临时录制截图      | `%LOCALAPPDATA%\ApaFlowRecorder\sessions\`                    |
 | 资料内嵌图片缓存    | `%LOCALAPPDATA%\ApaFlowRecorder\material-images\`             |
 

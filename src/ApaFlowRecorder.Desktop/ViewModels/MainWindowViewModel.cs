@@ -23,6 +23,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private readonly GeneralizedRequirementExportService _generalizedExportService = new();
     private readonly LlmSettingsStore _llmSettingsStore = new();
     private readonly PromptTemplateStore _promptTemplateStore = new();
+    private readonly RequirementDocumentTemplateStore _requirementDocumentTemplateStore = new();
     private readonly RecordingPackageMaterialCollector _recordingPackageMaterialCollector = new();
     private readonly ExtensionConnectionTracker _extensionConnectionTracker = new();
     private readonly DesktopInteractionCaptureService _desktopCaptureService;
@@ -40,6 +41,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private string _llmApiKey = string.Empty;
     private string _extraInstruction = "把录制步骤当成代表性示例，结合粗略需求、输入样例、输出样例和参考资料，生成给 AI 执行/理解的业务需求文档。只写业务步骤、业务输入和业务输出，不写浏览器类型、选择器、URL、桌面程序标识等采集技术细节。";
     private string _promptTemplate = GeneralizedRequirementPromptBuilder.DefaultTemplate;
+    private string _requirementDocumentTemplate = RequirementDocumentTemplateStore.DefaultTemplate;
     private string _generalizedStatus = "请选择资料后生成需求文档。不填 API Key 时会使用规则兜底；配置支持视觉的模型时会结合录制截图分析。";
     private string _lastCaptureSummary = "尚未收到浏览器事件。";
     private int _selectedWorkspaceIndex;
@@ -50,6 +52,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     {
         LoadSavedLlmSettings();
         LoadSavedPromptTemplate();
+        LoadSavedRequirementDocumentTemplate();
         _desktopCaptureService = new DesktopInteractionCaptureService(_recordingCoordinator.HandleCaptureEventAsync);
         _captureServer = new LocalCaptureServer(
             _recordingCoordinator.HandleCaptureEventAsync,
@@ -74,6 +77,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         SavePromptTemplateCommand = new RelayCommand(SavePromptTemplate);
         ResetPromptTemplateCommand = new RelayCommand(ResetPromptTemplate);
         OpenPromptTemplateFileCommand = new RelayCommand(OpenPromptTemplateFile);
+        SaveRequirementDocumentTemplateCommand = new RelayCommand(SaveRequirementDocumentTemplate);
+        ResetRequirementDocumentTemplateCommand = new RelayCommand(ResetRequirementDocumentTemplate);
+        OpenRequirementDocumentTemplateFileCommand = new RelayCommand(OpenRequirementDocumentTemplateFile);
         GenerateGeneralizedRequirementCommand = new AsyncRelayCommand(GenerateGeneralizedRequirementAsync);
         OpenGeneralizedFolderCommand = new RelayCommand(OpenGeneralizedFolder, () => !string.IsNullOrWhiteSpace(LastGeneralizedExportPath));
         OpenFinalRequirementDocumentCommand = new RelayCommand(OpenFinalRequirementDocument, () => IsFinalRequirementGenerated);
@@ -164,6 +170,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     public string LlmSettingsConfigPath => _llmSettingsStore.ConfigPath;
 
     public string PromptTemplateConfigPath => _promptTemplateStore.TemplatePath;
+
+    public string RequirementDocumentTemplateConfigPath => _requirementDocumentTemplateStore.TemplatePath;
 
     public string ProductName => ProductInfo.Name;
 
@@ -508,6 +516,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         }
     }
 
+    public string RequirementDocumentTemplate
+    {
+        get => _requirementDocumentTemplate;
+        set
+        {
+            _requirementDocumentTemplate = value;
+            OnPropertyChanged();
+        }
+    }
+
     public string GeneralizedStatus
     {
         get => _generalizedStatus;
@@ -547,6 +565,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     public RelayCommand SavePromptTemplateCommand { get; }
     public RelayCommand ResetPromptTemplateCommand { get; }
     public RelayCommand OpenPromptTemplateFileCommand { get; }
+    public RelayCommand SaveRequirementDocumentTemplateCommand { get; }
+    public RelayCommand ResetRequirementDocumentTemplateCommand { get; }
+    public RelayCommand OpenRequirementDocumentTemplateFileCommand { get; }
     public AsyncRelayCommand GenerateGeneralizedRequirementCommand { get; }
     public RelayCommand OpenGeneralizedFolderCommand { get; }
     public RelayCommand OpenFinalRequirementDocumentCommand { get; }
@@ -655,7 +676,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                 ParseMaterialPaths(),
                 settings,
                 ExtraInstruction,
-                PromptTemplate);
+                PromptTemplate,
+                RequirementDocumentTemplate);
 
             LastGeneralizedExportPath = exportDirectory;
             GeneralizedStatus = $"已生成：{result.GenerationMode}。导出目录：{exportDirectory}";
@@ -725,6 +747,24 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     {
         SavePromptTemplate();
         OpenFile(PromptTemplateConfigPath);
+    }
+
+    private void SaveRequirementDocumentTemplate()
+    {
+        _requirementDocumentTemplateStore.Save(RequirementDocumentTemplate);
+        StatusMessage = $"需求文档模板已保存：{RequirementDocumentTemplateConfigPath}";
+    }
+
+    private void ResetRequirementDocumentTemplate()
+    {
+        RequirementDocumentTemplate = _requirementDocumentTemplateStore.ResetToDefault();
+        StatusMessage = "已恢复默认需求文档模板。";
+    }
+
+    private void OpenRequirementDocumentTemplateFile()
+    {
+        SaveRequirementDocumentTemplate();
+        OpenFile(RequirementDocumentTemplateConfigPath);
     }
 
     private void OpenExportFolder()
@@ -817,9 +857,26 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         _promptTemplate = template;
     }
 
+    private void LoadSavedRequirementDocumentTemplate()
+    {
+        var template = _requirementDocumentTemplateStore.LoadOrCreateDefault();
+        if (LooksLikeLegacyRequirementDocumentTemplate(template))
+        {
+            template = _requirementDocumentTemplateStore.ResetToDefault();
+        }
+
+        _requirementDocumentTemplate = template;
+    }
+
     private static bool LooksLikeLegacyDefaultPromptTemplate(string template) =>
         template.Contains("每一步必须包含操作对象、处理规则、关键验证方式、失败时如何处理", StringComparison.Ordinal)
-        || template.Contains("必须输出 Markdown，并显式描述输入资料、输出成果、循环结构、动态发现规则、字段提取、文件写入、等待/异常/日志策略", StringComparison.Ordinal);
+        || template.Contains("必须输出 Markdown，并显式描述输入资料、输出成果、循环结构、动态发现规则、字段提取、文件写入、等待/异常/日志策略", StringComparison.Ordinal)
+        || template.Contains("## 一、流程概述", StringComparison.Ordinal);
+
+    private static bool LooksLikeLegacyRequirementDocumentTemplate(string template) =>
+        template.Contains("人民币汇率中间价自动采集", StringComparison.Ordinal)
+        || template.Contains("为什么这个格式最好", StringComparison.Ordinal)
+        || template.Contains("反例：什么格式让我很痛苦", StringComparison.Ordinal);
 
     private void PersistLlmSettings()
     {

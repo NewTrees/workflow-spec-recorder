@@ -28,6 +28,7 @@ public sealed class PromptTemplateStoreTests
         var template = store.ResetToDefault();
 
         Assert.Equal(template, File.ReadAllText(path));
-        Assert.Contains("# 项目需求描述", template);
+        Assert.Contains(GeneralizedRequirementPromptBuilder.RequirementDocumentTemplatePlaceholder, template);
+        Assert.DoesNotContain("人民币汇率中间价自动采集", template);
     }
 }

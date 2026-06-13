@@ -17,6 +17,7 @@ public sealed class GeneralizedRequirementExportService
         LlmSettings llmSettings,
         string? extraInstruction,
         string? promptTemplate,
+        string? requirementDocumentTemplate,
         CancellationToken cancellationToken = default)
     {
         var materials = new SourceMaterialBundle
@@ -35,7 +36,7 @@ public sealed class GeneralizedRequirementExportService
             materials.Document = _materialReader.ReadDocument(documentPath);
         }
 
-        var result = await _generator.GenerateAsync(session, materials, llmSettings, extraInstruction, promptTemplate, cancellationToken);
+        var result = await _generator.GenerateAsync(session, materials, llmSettings, extraInstruction, promptTemplate, requirementDocumentTemplate, cancellationToken);
         var exportDirectory = await ExportAsync(session, result, cancellationToken);
         return (exportDirectory, result);
     }
@@ -46,6 +47,7 @@ public sealed class GeneralizedRequirementExportService
         LlmSettings llmSettings,
         string? extraInstruction,
         string? promptTemplate,
+        string? requirementDocumentTemplate,
         CancellationToken cancellationToken = default)
     {
         var materials = new SourceMaterialBundle();
@@ -66,7 +68,7 @@ public sealed class GeneralizedRequirementExportService
             materials.Files.Add(_materialReader.ReadMaterial(path));
         }
 
-        var result = await _generator.GenerateAsync(session, materials, llmSettings, extraInstruction, promptTemplate, cancellationToken);
+        var result = await _generator.GenerateAsync(session, materials, llmSettings, extraInstruction, promptTemplate, requirementDocumentTemplate, cancellationToken);
         var exportDirectory = await ExportAsync(session, result, cancellationToken);
         return (exportDirectory, result);
     }
